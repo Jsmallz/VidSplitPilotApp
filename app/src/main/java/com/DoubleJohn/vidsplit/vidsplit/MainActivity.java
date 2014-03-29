@@ -52,6 +52,14 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(requestCode == REQUEST_VIDEO_CAPTURE && resultCode == RESULT_OK) {
+            Uri videoUri = intent.getData();
+            mVideoView.setVideoURI(videoUri);
+        }
+    }
+    
     public void takeVid(View v) {
         System.out.print("Test");
     }
