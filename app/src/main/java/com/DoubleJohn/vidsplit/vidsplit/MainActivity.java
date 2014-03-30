@@ -1,46 +1,83 @@
 package com.DoubleJohn.vidsplit.vidsplit;
 
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+
+import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
-import android.drm.DrmManagerClient;
-import android.provider.MediaStore;
-import android.support.v7.app.ActionBarActivity;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.Image;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
-import android.view.*;
-import android.widget.Button;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.util.Log;
+import android.view.View;
 import android.widget.ImageButton;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.VideoView;
 
+public class MainActivity extends Activity {
 
-public class MainActivity extends ActionBarActivity {
+    private static final int ACTION_TAKE_PHOTO_B = 1;
+    private static final int ACTION_TAKE_PHOTO_S = 2;
+    private static final int ACTION_TAKE_VIDEO = 3;
 
-    private ImageButton takeVidButton = null;
+    private static final String BITMAP_STORAGE_KEY = "viewbitmap";
+    private static final String IMAGEVIEW_VISIBILITY_STORAGE_KEY = "imageviewvisibility";
+    private ImageView mImageView;
+    private Bitmap mImageBitmap;
+
+    private static final String VIDEO_STORAGE_KEY = "viewvideo";
+    private static final String VIDEOVIEW_VISIBILITY_STORAGE_KEY = "videoviewvisibility";
+    private VideoView mVideoView;
+    private Uri mVideoUri;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        takeVidButton = (ImageButton) findViewById(R.id.takeVidButton);
+        mVideoView = (VideoView) findViewById(R.id.videoView1);
+        mImageBitmap = null;
+        mVideoUri = null;
+
+        Button vidBtn = (Button) findViewById(R.id.takeVidButton);
+        setBtnListenerOrDisable(
+                vidBtn,
+                mTakeVidOnClickListener,
+                MediaStore.ACTION_VIDEO_CAPTURE
+        );
     }
 
-
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case ACTION_TAKE_VIDEO: {
+                if (resultCode == RESULT_OK) {
+                    handleCameraVideo(data);
+                }
+                break;
+            } // ACTION_TAKE_VIDEO
+        } // switch
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
+    public static boolean isIntentAvailable(Context context, String action) {
+        final PackageManager packageManager = context.getPackageManager();
+        final Intent intent = new Intent(action);
+        List<ResolveInfo> list =
+                packageManager.queryIntentActivities(intent,
+                        PackageManager.MATCH_DEFAULT_ONLY);
+        return list.size() > 0;
     }
 
     static final int REQUEST_VIDEO_CAPTURE = 1;
@@ -52,14 +89,37 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if(requestCode == REQUEST_VIDEO_CAPTURE && resultCode == RESULT_OK) {
-            Uri videoUri = intent.getData();
-            mVideoView.setVideoURI(videoUri);
+
+    private void handleCameraVideo(Intent intent) {
+        mVideoUri = intent.getData();
+        mVideoView.setVideoURI(mVideoUri);
+        mImageBitmap = null;
+        mVideoView.setVisibility(View.VISIBLE);
+        mImageView.setVisibility(View.INVISIBLE);
+    }
+
+    Button.OnClickListener mTakeVidOnClickListener =
+            new Button.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dispatchTakeVideoIntent();
+                }
+            };
+
+    private void setBtnListenerOrDisable(
+            Button btn,
+            Button.OnClickListener onClickListener,
+            String intentName
+    ) {
+        if (isIntentAvailable(this, intentName)) {
+            btn.setOnClickListener(onClickListener);
+        } else {
+            btn.setText(
+                    getText(R.string.cannot).toString() + " " + btn.getText());
+            btn.setClickable(false);
         }
     }
-    
+
     public void takeVid(View v) {
         System.out.print("Test");
     }
