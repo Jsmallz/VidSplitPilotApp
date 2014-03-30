@@ -114,14 +114,8 @@ public class MainActivity extends Activity {
         if (isIntentAvailable(this, intentName)) {
             btn.setOnClickListener(onClickListener);
         } else {
-            btn.setText(
-                    getText(R.string.cannot).toString() + " " + btn.getText());
             btn.setClickable(false);
         }
-    }
-
-    public void takeVid(View v) {
-        System.out.print("Test");
     }
 
 }
